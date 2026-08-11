@@ -82,4 +82,25 @@ contract ProjectRegistryTests is Test {
         vm.prank(owner);
         projectRegistry.approveProject(_projectId);
     }
+
+    function test_approveProject_Updates_projectStatus() public {
+        projectRegistry.submitProject(
+            _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
+        );
+
+        uint256 expectedProjectId = 0;
+
+        ProjectRegistry.Project memory _project = projectRegistry.getProject(expectedProjectId);
+
+        uint8 initialProjectStatus = uint8(_project.projectStatus);
+
+        vm.prank(owner);
+        projectRegistry.approveProject(expectedProjectId);
+
+        ProjectRegistry.Project memory _updatedProject = projectRegistry.getProject(expectedProjectId);
+        uint8 finalProjectStatus = uint8(_updatedProject.projectStatus);
+
+        assertEq(initialProjectStatus, uint8(ProjectRegistry.ProjectStatus.Voting));
+        assertEq(finalProjectStatus, uint8(ProjectRegistry.ProjectStatus.Approved));
+    }
 }
