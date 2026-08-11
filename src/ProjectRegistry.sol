@@ -2,7 +2,11 @@
 
 pragma solidity ^0.8.19;
 
-contract ProjectRegistry {
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
+contract ProjectRegistry is Ownable {
+    constructor(address initialOwner) Ownable(initialOwner) {}
+
     enum ProjectReturnType {
         Payback,
         Interest,
@@ -66,5 +70,10 @@ contract ProjectRegistry {
         totalProjects++;
 
         emit ProjectSubmitted(_projectId);
+    }
+
+    function approveProject(uint256 _projectId) public onlyOwner {
+        Project storage _project = projectIdToProject[_projectId];
+        _project.projectStatus = ProjectStatus.Approved;
     }
 }
