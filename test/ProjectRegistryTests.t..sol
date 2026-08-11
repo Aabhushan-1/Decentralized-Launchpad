@@ -76,7 +76,7 @@ contract ProjectRegistryTests is Test {
         projectRegistry.approveProject(expectedProjectId);
     }
 
-    function test_approveProject_Reverts_If_Not_Project_ID_Is_Invalid() public {
+    function test_approveProject_Reverts_If_Project_ID_Is_Invalid() public {
         uint256 _projectId;
         vm.expectRevert("Project does not exist");
         vm.prank(owner);
@@ -127,7 +127,7 @@ contract ProjectRegistryTests is Test {
         projectRegistry.rejectProject(expectedProjectId);
     }
 
-    function test_rejectProject_Reverts_If_Not_Project_ID_Is_Invalid() public {
+    function test_rejectProject_Reverts_If_Project_ID_Is_Invalid() public {
         uint256 _projectId;
         vm.expectRevert("Project does not exist");
         vm.prank(owner);
@@ -165,5 +165,28 @@ contract ProjectRegistryTests is Test {
         vm.expectEmit();
         emit ProjectRejected(expectedProjectId);
         projectRegistry.rejectProject(expectedProjectId);
+    }
+
+    function test_getProject() public {
+        projectRegistry.submitProject(
+            _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
+        );
+
+        uint256 expectedProjectId = 0;
+
+        ProjectRegistry.Project memory _project = projectRegistry.getProject(expectedProjectId);
+
+        assertEq(_project.projectId, expectedProjectId);
+        assertEq(_project.projectName, _projectName);
+        assertEq(_project.projectOwner, address(this));
+        assertEq(_project.createdAt, block.timestamp);
+        assertEq(_project.fundingGoal, _fundingGoal);
+    }
+
+    function test_getProject_Reverts_If_Project_ID_Is_Invalid() public {
+        uint256 expectedProjectId = 0;
+
+        vm.expectRevert("Project does not exist");
+        projectRegistry.getProject(expectedProjectId);
     }
 }
