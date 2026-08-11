@@ -64,4 +64,15 @@ contract ProjectRegistryTests is Test {
 
         // assertEq(abi.encode(_project), abi.encode(expectedProject));
     }
+
+    function test_approveProject_Reverts_If_Not_Owner() public {
+        projectRegistry.submitProject(
+            _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
+        );
+
+        uint256 expectedProjectId = 0;
+
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        projectRegistry.approveProject(expectedProjectId);
+    }
 }
