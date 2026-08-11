@@ -3,8 +3,7 @@
 pragma solidity ^0.8.19;
 
 contract ProjectRegistry {
-
-    enum ProjectReturnType{
+    enum ProjectReturnType {
         Payback,
         Interest,
         Nothing
@@ -33,5 +32,9 @@ contract ProjectRegistry {
     }
 
     uint256 private totalProjects;
-    mapping (uint256 => Project) private projectIdToProject;
+    mapping(uint256 => Project) private projectIdToProject;
+
+    event ProjectSubmitted(uint256 indexed projectId);
+    event ProjectApproved(uint256 indexed projectId);
+    event ProjectRejected(uint256 indexed projectId);
 }
