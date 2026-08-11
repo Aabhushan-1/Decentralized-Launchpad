@@ -6,4 +6,11 @@ import {Test} from "../lib/forge-std/src/Test.sol";
 import {ProjectRegistry} from "../src/ProjectRegistry.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ProjectRegistryTests is Test {}
+contract ProjectRegistryTests is Test {
+    ProjectRegistry projectRegistry;
+    address owner = makeAddr("owner");
+
+    function setUp() public {
+        projectRegistry = new ProjectRegistry(owner);
+    }
+}
