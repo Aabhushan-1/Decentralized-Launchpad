@@ -79,21 +79,21 @@ contract ProjectRegistry is Ownable {
         emit ProjectSubmitted(_projectId);
     }
 
-    function approveProject(uint256 _projectId) public onlyOwner {
+    function approveProject(uint256 _projectId) public onlyOwner validProject(_projectId) {
         Project storage _project = projectIdToProject[_projectId];
         _project.projectStatus = ProjectStatus.Approved;
 
         emit ProjectApproved(_projectId);
     }
 
-    function rejectProject(uint256 _projectId) public onlyOwner {
+    function rejectProject(uint256 _projectId) public onlyOwner validProject(_projectId) {
         Project storage _project = projectIdToProject[_projectId];
         _project.projectStatus = ProjectStatus.Rejected;
 
         emit ProjectRejected(_projectId);
     }
 
-    function getProject(uint256 _projectId) public view returns (Project memory) {
+    function getProject(uint256 _projectId) public view validProject(_projectId) returns (Project memory) {
         return projectIdToProject[_projectId];
     }
 }
