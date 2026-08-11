@@ -42,6 +42,13 @@ contract ProjectRegistry is Ownable {
     event ProjectApproved(uint256 indexed projectId);
     event ProjectRejected(uint256 indexed projectId);
 
+    modifier validProject(uint256 _projectId) {
+        if (_projectId >= totalProjects) {
+            revert("Project does not exist");
+        }
+        _;
+    }
+
     function submitProject(
         string memory _projectName,
         string memory _projectCategory,
