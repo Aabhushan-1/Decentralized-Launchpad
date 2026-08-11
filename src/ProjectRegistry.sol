@@ -76,4 +76,9 @@ contract ProjectRegistry is Ownable {
         Project storage _project = projectIdToProject[_projectId];
         _project.projectStatus = ProjectStatus.Approved;
     }
+
+    function rejectProject(uint256 _projectId) public onlyOwner {
+        Project storage _project = projectIdToProject[_projectId];
+        _project.projectStatus = ProjectStatus.Rejected;
+    }
 }
