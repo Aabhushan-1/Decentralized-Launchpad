@@ -35,4 +35,33 @@ contract ProjectRegistryTests is Test {
             _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
         );
     }
+
+    function test_submitProject_Updates_Mapping() public {
+        projectRegistry.submitProject(
+            _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
+        );
+
+        uint256 expectedProjectId = 0;
+
+        ProjectRegistry.Project memory _project = projectRegistry.getProject(expectedProjectId);
+
+        assertEq(_project.projectName, _projectName);
+        assertEq(_project.projectOwner, address(this));
+        assertEq(_project.fundingGoal, _fundingGoal);
+        assertEq(uint256(_project.projectStatus), uint256(ProjectRegistry.ProjectStatus.Voting));
+        // ProjectRegistry.Project memory expectedProject = ProjectRegistry.Project({
+        //     projectId: 0,
+        //     projectOwner: address(this),
+        //     projectName: _projectName,
+        //     projectCategory: _projectCategory,
+        //     projectDescription: _projectDescription,
+        //     createdAt: block.timestamp,
+        //     fundingGoal: _fundingGoal,
+        //     projectObjectives: _projectObjectives,
+        //     projectReturnType: _projectReturnType,
+        //     projectStatus: ProjectRegistry.ProjectStatus.Voting
+        // });
+
+        // assertEq(abi.encode(_project), abi.encode(expectedProject));
+    }
 }
