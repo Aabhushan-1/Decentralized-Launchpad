@@ -81,4 +81,8 @@ contract ProjectRegistry is Ownable {
         Project storage _project = projectIdToProject[_projectId];
         _project.projectStatus = ProjectStatus.Rejected;
     }
+
+    function getProject(uint256 _projectId) public view returns (Project memory) {
+        return projectIdToProject[_projectId];
+    }
 }
