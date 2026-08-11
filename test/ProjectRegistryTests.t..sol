@@ -75,4 +75,11 @@ contract ProjectRegistryTests is Test {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
         projectRegistry.approveProject(expectedProjectId);
     }
+
+    function test_approveProject_Reverts_If_Not_Project_ID_Is_Invalid() public {
+        uint256 _projectId;
+        vm.expectRevert("Project does not exist");
+        vm.prank(owner);
+        projectRegistry.approveProject(_projectId);
+    }
 }
