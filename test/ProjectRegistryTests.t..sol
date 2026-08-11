@@ -103,4 +103,16 @@ contract ProjectRegistryTests is Test {
         assertEq(initialProjectStatus, uint8(ProjectRegistry.ProjectStatus.Voting));
         assertEq(finalProjectStatus, uint8(ProjectRegistry.ProjectStatus.Approved));
     }
+
+    function test_approveProject_Emits() public {
+        projectRegistry.submitProject(
+            _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
+        );
+        uint256 expectedProjectId = 0;
+
+        vm.prank(owner);
+        vm.expectEmit();
+        emit ProjectApproved(expectedProjectId);
+        projectRegistry.approveProject(expectedProjectId);
+    }
 }
