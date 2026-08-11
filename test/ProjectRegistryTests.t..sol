@@ -49,20 +49,6 @@ contract ProjectRegistryTests is Test {
         assertEq(_project.projectOwner, address(this));
         assertEq(_project.fundingGoal, _fundingGoal);
         assertEq(uint256(_project.projectStatus), uint256(ProjectRegistry.ProjectStatus.Voting));
-        // ProjectRegistry.Project memory expectedProject = ProjectRegistry.Project({
-        //     projectId: 0,
-        //     projectOwner: address(this),
-        //     projectName: _projectName,
-        //     projectCategory: _projectCategory,
-        //     projectDescription: _projectDescription,
-        //     createdAt: block.timestamp,
-        //     fundingGoal: _fundingGoal,
-        //     projectObjectives: _projectObjectives,
-        //     projectReturnType: _projectReturnType,
-        //     projectStatus: ProjectRegistry.ProjectStatus.Voting
-        // });
-
-        // assertEq(abi.encode(_project), abi.encode(expectedProject));
     }
 
     function test_approveProject_Reverts_If_Not_Owner() public {
