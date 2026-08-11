@@ -115,4 +115,55 @@ contract ProjectRegistryTests is Test {
         emit ProjectApproved(expectedProjectId);
         projectRegistry.approveProject(expectedProjectId);
     }
+
+    function test_rejectProject_Reverts_If_Not_Owner() public {
+        projectRegistry.submitProject(
+            _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
+        );
+
+        uint256 expectedProjectId = 0;
+
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        projectRegistry.rejectProject(expectedProjectId);
+    }
+
+    function test_rejectProject_Reverts_If_Not_Project_ID_Is_Invalid() public {
+        uint256 _projectId;
+        vm.expectRevert("Project does not exist");
+        vm.prank(owner);
+        projectRegistry.rejectProject(_projectId);
+    }
+
+    function test_rejectProject_Updates_projectStatus() public {
+        projectRegistry.submitProject(
+            _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
+        );
+
+        uint256 expectedProjectId = 0;
+
+        ProjectRegistry.Project memory _project = projectRegistry.getProject(expectedProjectId);
+
+        uint8 initialProjectStatus = uint8(_project.projectStatus);
+
+        vm.prank(owner);
+        projectRegistry.rejectProject(expectedProjectId);
+
+        ProjectRegistry.Project memory _updatedProject = projectRegistry.getProject(expectedProjectId);
+        uint8 finalProjectStatus = uint8(_updatedProject.projectStatus);
+
+        assertEq(initialProjectStatus, uint8(ProjectRegistry.ProjectStatus.Voting));
+        assertEq(finalProjectStatus, uint8(ProjectRegistry.ProjectStatus.Rejected));
+    }
+
+    function test_rejectProject_Emits() public {
+        projectRegistry.submitProject(
+            _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
+        );
+        uint256 expectedProjectId = 0;
+
+        vm.prank(owner);
+        vm.expectEmit();
+        emit ProjectRejected(expectedProjectId);
+        projectRegistry.rejectProject(expectedProjectId);
+    }
 }
