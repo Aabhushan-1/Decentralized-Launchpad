@@ -38,4 +38,23 @@ contract Governance {
     event SessionCreated(uint256 indexed sessionId);
     event Voted(uint256 indexed sessionId, uint256 indexed projectId, address voter);
     event SessionExecuted(uint256 indexed sessionId, uint256 winningProjectId);
+
+    function createSession(uint256 duration, uint256[] memory projectIds) public {
+        uint256 _sessionId = totalSessions;
+
+        VotingSession storage _votingSession = sessions[_sessionId];
+        _votingSession.sessionId = _sessionId;
+        _votingSession.duration = duration;
+        _votingSession.deadline = block.timestamp + duration;
+        _votingSession.executed = false;
+        _votingSession.sessionStatus = SessionStatus.ongoing;
+
+        for (uint256 i = 0; i < projectIds.length; i++) {
+            _votingSession.proposals.push(Proposal({projectId: projectIds[i], votes: 0}));
+        }
+
+        totalSessions++;
+
+        emit SessionCreated(_sessionId);
+    }
 }
