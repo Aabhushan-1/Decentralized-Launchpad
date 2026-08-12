@@ -1,0 +1,5 @@
+////SPDX-License-Identidier: MIT
+
+pragma solidity ^0.8.19;
+
+contract Governance {}
