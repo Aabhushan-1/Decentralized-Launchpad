@@ -102,4 +102,45 @@ contract Governance {
             revert("Project Not Found!");
         }
     }
+
+    function finalizeVoting(uint256 _sessionId) public sessionExists(_sessionId) {
+        VotingSession storage _session = sessions[_sessionId];
+        uint256 proposalLength = _session.proposals.length;
+
+        if (_session.closed) {
+            revert("Session Closed!");
+        }
+
+        if (_session.deadline > block.timestamp) {
+            revert("Deadline not reached!");
+        }
+
+        uint256 _totalVotes;
+        uint256 _highestVote;
+        uint256 _winningProjectId;
+
+        for (uint256 i = 0; i < proposalLength; i++) {
+            _totalVotes += _session.proposals[i].votes;
+            if (_session.proposals[i].votes > _highestVote) {
+                _winningProjectId = _session.proposals[i].projectId;
+                _highestVote = _session.proposals[i].votes;
+            }
+        }
+
+        if (_totalVotes < QUORUM) {
+            revert("Not enough total votes!");
+        }
+
+        for (uint256 i = 0; i < proposalLength; i++) {
+            if (_session.proposals[i].projectId == _winningProjectId) {
+                projectRegistry.approveProject(_session.proposals[i].projectId);
+            } else {
+                projectRegistry.rejectProject(_session.proposals[i].projectId);
+            }
+        }
+
+        _session.closed = true;
+
+        emit SessionClosed(_sessionId, _winningProjectId);
+    }
 }
