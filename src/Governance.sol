@@ -19,7 +19,7 @@ contract Governance {
         uint256 sessionId;
         uint256 duration;
         uint256 deadline;
-        bool executed;
+        bool closed;
         Proposal[] proposals;
         SessionStatus sessionStatus;
     }
@@ -30,6 +30,25 @@ contract Governance {
         projectRegistry = ProjectRegistry(_projectRegistry);
     }
 
+    modifier sessionOpen(uint256 _sessionId) {
+        if (block.timestamp > sessions[_sessionId].deadline) {
+            revert("Voting period ended!");
+        }
+
+        if (sessions[_sessionId].closed) {
+            revert("Session Closed!");
+        }
+
+        _;
+    }
+
+    modifier sessionExists(uint256 _sessionId) {
+        if (_sessionId >= totalSessions) {
+            revert("Session does not exist!");
+        }
+        _;
+    }
+
     uint256 private totalSessions;
     uint256 private constant QUORUM = 100;
     mapping(uint256 => VotingSession) private sessions;
@@ -37,7 +56,7 @@ contract Governance {
 
     event SessionCreated(uint256 indexed sessionId);
     event Voted(uint256 indexed sessionId, uint256 indexed projectId, address voter);
-    event SessionExecuted(uint256 indexed sessionId, uint256 winningProjectId);
+    event SessionClosed(uint256 indexed sessionId, uint256 winningProjectId);
 
     function createSession(uint256 duration, uint256[] memory projectIds) public {
         uint256 _sessionId = totalSessions;
@@ -46,7 +65,7 @@ contract Governance {
         _votingSession.sessionId = _sessionId;
         _votingSession.duration = duration;
         _votingSession.deadline = block.timestamp + duration;
-        _votingSession.executed = false;
+        _votingSession.closed = false;
         _votingSession.sessionStatus = SessionStatus.ongoing;
 
         for (uint256 i = 0; i < projectIds.length; i++) {
@@ -56,5 +75,31 @@ contract Governance {
         totalSessions++;
 
         emit SessionCreated(_sessionId);
+    }
+
+    function vote(uint256 _sessionId, uint256 _projectId) public sessionExists(_sessionId) sessionOpen(_sessionId) {
+        address _voter = msg.sender;
+        bool found = false;
+
+        VotingSession storage _session = sessions[_sessionId];
+
+        if (addressHasVoted[_voter][_sessionId]) {
+            revert("Already voted in this session!");
+        }
+
+        for (uint256 i = 0; i < _session.proposals.length; i++) {
+            if (_session.proposals[i].projectId == _projectId) {
+                _session.proposals[i].votes++;
+                addressHasVoted[_voter][_sessionId] = true;
+
+                emit Voted(_sessionId, _projectId, _voter);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            revert("Project Not Found!");
+        }
     }
 }
