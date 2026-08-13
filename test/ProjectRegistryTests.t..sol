@@ -37,18 +37,25 @@ contract ProjectRegistryTests is Test {
     }
 
     function test_submitProject_Updates_Mapping() public {
-        projectRegistry.submitProject(
+        uint256 _projectId = projectRegistry.submitProject(
             _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
         );
 
-        uint256 expectedProjectId = 0;
-
-        ProjectRegistry.Project memory _project = projectRegistry.getProject(expectedProjectId);
+        ProjectRegistry.Project memory _project = projectRegistry.getProject(_projectId);
 
         assertEq(_project.projectName, _projectName);
         assertEq(_project.projectOwner, address(this));
         assertEq(_project.fundingGoal, _fundingGoal);
         assertEq(uint256(_project.projectStatus), uint256(ProjectRegistry.ProjectStatus.Voting));
+    }
+
+    function test_submitProject_Returns_Correct_projectId() public {
+        uint256 expectedProjectId = 0;
+        uint256 _projectId = projectRegistry.submitProject(
+            _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
+        );
+
+        assertEq(expectedProjectId, _projectId);
     }
 
     function test_approveProject_Reverts_If_Not_Owner() public {
