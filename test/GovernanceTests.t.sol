@@ -29,25 +29,70 @@ contract GovernanceTests is Test {
         projectRegistry.transferOwnership(address(governance));
     }
 
-    function _submitProject() public returns (uint256) {
-        return projectRegistry.submitProject(
-            _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
-        );
+    function _createProjects(uint256 _projectCount) internal returns (uint256[] memory) {
+        uint256[] memory _projectIds = new uint256[](_projectCount);
+        for (uint256 i = 0; i < _projectCount; i++) {
+            _projectIds[i] = projectRegistry.submitProject(
+                _projectName,
+                _projectCategory,
+                _projectDescription,
+                _fundingGoal,
+                _projectObjectives,
+                _projectReturnType
+            );
+        }
+
+        return _projectIds;
+    }
+
+    function _createSession(uint256 duration, uint256 _projectCount) internal returns (uint256, uint256[] memory) {
+        uint256[] memory _projectIds = _createProjects(_projectCount);
+        return (governance.createSession(duration, _projectIds), _projectIds);
+    }
+
+    function test_createSession_Returns_Correct_Session_Id() public {
+        uint256 _projectCount = 1;
+        uint256 expectedSessionId = 0;
+
+        (uint256 _sessionId,) = _createSession(_duration, _projectCount);
+
+        assertEq(_sessionId, expectedSessionId);
     }
 
     function test_Session_Is_Created_With_Correct_Data() public {
-        uint256 _projectId = _submitProject();
-        uint256[] memory _projectIds = new uint256[](1);
-        _projectIds[0] = _projectId;
-        uint256 expectedSessionId = 0;
-        uint256 expectedProjectId = 0;
+        uint256 _projectCount = 1;
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
 
-        uint256 _sessionId = governance.createSession(_duration, _projectIds);
-        Governance.VotingSession _votingSession = governance.getSession(_sessionId);
-        
+        uint256 expectedSessionId = 0;
+
+        Governance.Proposal[] memory expectedProposals = new Governance.Proposal[](1);
+        expectedProposals[0] = Governance.Proposal({projectId: _projectIds[0], votes: 0});
+
+        Governance.VotingSession memory _votingSession = governance.getSession(_sessionId);
+
         assertEq(_votingSession.sessionId, expectedSessionId);
         assertEq(_votingSession.deadline, block.timestamp + _duration);
         assertEq(_votingSession.duration, _duration);
-        asserteq(_votingSession.closed, false);
+        assertEq(_votingSession.closed, false);
+        assertEq(abi.encode(_votingSession.proposals), abi.encode(expectedProposals));
+    }
+
+    function test_createSession_Emits() public {
+        uint256 _projectCount = 1;
+        uint256[] memory _projectIds = _createProjects(_projectCount);
+        uint256 expectedProjectId = 0;
+
+        vm.expectEmit();
+        emit SessionCreated(expectedProjectId);
+        governance.createSession(_duration, _projectIds);
+    }
+
+    function test_vote_Reverts_If_Session_Doesnt_Exist() public {
+        uint256 _projectCount = 1;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+
+        vm.expectRevert("Session does not exist!");
+        governance.vote((_sessionId + 1), _projectIds[0]);
     }
 }
