@@ -5,11 +5,6 @@ pragma solidity ^0.8.19;
 import {ProjectRegistry} from "../src/ProjectRegistry.sol";
 
 contract Governance {
-    enum SessionStatus {
-        ongoing,
-        ended
-    }
-
     struct Proposal {
         uint256 projectId;
         uint256 votes;
@@ -21,7 +16,6 @@ contract Governance {
         uint256 deadline;
         bool closed;
         Proposal[] proposals;
-        SessionStatus sessionStatus;
     }
 
     ProjectRegistry private projectRegistry;
@@ -58,7 +52,7 @@ contract Governance {
     event Voted(uint256 indexed sessionId, uint256 indexed projectId, address voter);
     event SessionClosed(uint256 indexed sessionId, uint256 winningProjectId);
 
-    function createSession(uint256 duration, uint256[] memory projectIds) public {
+    function createSession(uint256 duration, uint256[] memory projectIds) public returns (uint256) {
         uint256 _sessionId = totalSessions;
 
         VotingSession storage _votingSession = sessions[_sessionId];
@@ -66,7 +60,6 @@ contract Governance {
         _votingSession.duration = duration;
         _votingSession.deadline = block.timestamp + duration;
         _votingSession.closed = false;
-        _votingSession.sessionStatus = SessionStatus.ongoing;
 
         for (uint256 i = 0; i < projectIds.length; i++) {
             _votingSession.proposals.push(Proposal({projectId: projectIds[i], votes: 0}));
@@ -75,6 +68,7 @@ contract Governance {
         totalSessions++;
 
         emit SessionCreated(_sessionId);
+        return _sessionId;
     }
 
     function vote(uint256 _sessionId, uint256 _projectId) public sessionExists(_sessionId) sessionOpen(_sessionId) {
@@ -142,5 +136,9 @@ contract Governance {
         _session.closed = true;
 
         emit SessionClosed(_sessionId, _winningProjectId);
+    }
+
+    function getSession(uint256 _sessionId) public view sessionExists(_sessionId) returns (VotingSession memory) {
+        return sessions[_sessionId];
     }
 }
