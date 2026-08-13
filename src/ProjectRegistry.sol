@@ -56,7 +56,7 @@ contract ProjectRegistry is Ownable {
         uint256 _fundingGoal,
         string memory _projectObjectives,
         ProjectReturnType _projectReturnType
-    ) public {
+    ) public returns (uint256) {
         uint256 _projectId = totalProjects;
         address _projectOwner = msg.sender;
         uint256 _createdAt = block.timestamp;
@@ -77,6 +77,7 @@ contract ProjectRegistry is Ownable {
         totalProjects++;
 
         emit ProjectSubmitted(_projectId);
+        return _projectId;
     }
 
     function approveProject(uint256 _projectId) public onlyOwner validProject(_projectId) {
