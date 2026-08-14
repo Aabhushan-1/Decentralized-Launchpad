@@ -185,4 +185,92 @@ contract GovernanceTests is Test {
         assertEq(initialMapping, false);
         assertEq(finalMapping, true);
     }
+
+    function test_finalizeVoting_Reverts_If_Session_Doesnt_Exits() public {
+        uint256 _sessionId;
+        vm.expectRevert("Session does not exist!");
+        governance.finalizeVoting(_sessionId);
+    }
+
+    function test_finalizeVoting_Reverts_If_Session_Is_Closed() public {
+        uint256 _projectCount = 1;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds[0];
+
+        _castVote(_QUORUM, _sessionId, _projectId);
+        vm.warp(_duration + block.timestamp);
+        governance.finalizeVoting(_sessionId);
+
+        vm.expectRevert("Session Closed!");
+        governance.finalizeVoting(_sessionId);
+    }
+
+    function test_finalizeVoting_Reverts_If_Deadline_Not_Reached() public {
+        uint256 _projectCount = 1;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds[0];
+
+        _castVote(_QUORUM, _sessionId, _projectId);
+        vm.expectRevert("Deadline not reached!");
+        governance.finalizeVoting(_sessionId);
+    }
+
+    function test_finalizeVoting_Reverts_If_Not_Enough_Votes() public {
+        uint256 _projectCount = 1;
+        uint256 _noOfVotes = 1;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds[0];
+
+        _castVote(_noOfVotes, _sessionId, _projectId);
+        vm.warp(_duration + block.timestamp);
+        vm.expectRevert("Not enough total votes!");
+        governance.finalizeVoting(_sessionId);
+    }
+
+    function test_finalizeVoting_Emits() public {
+        uint256 _projectCount = 1;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds[0];
+
+        _castVote(_QUORUM, _sessionId, _projectId);
+        vm.warp(_duration + block.timestamp);
+        vm.expectEmit();
+        emit SessionClosed(_sessionId, _projectId);
+        governance.finalizeVoting(_sessionId);
+    }
+
+    function test_finalizeVoting_Approves_Winning_Project() public {
+        uint256 _projectCount = 2;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds[0];
+
+        _castVote(_QUORUM, _sessionId, _projectId);
+        vm.warp(_duration + block.timestamp);
+        governance.finalizeVoting(_sessionId);
+
+        ProjectRegistry.Project memory _project = projectRegistry.getProject(_projectId);
+
+        assertEq(abi.encode(_project.projectStatus), abi.encode(ProjectRegistry.ProjectStatus.Approved));
+    }
+
+    function test_finalizeVoting_Rejects_Winning_Project() public {
+        uint256 _projectCount = 2;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds[0];
+        uint256 _losingProject = _projectIds[1];
+
+        _castVote(_QUORUM, _sessionId, _projectId);
+        vm.warp(_duration + block.timestamp);
+        governance.finalizeVoting(_sessionId);
+
+        ProjectRegistry.Project memory _project = projectRegistry.getProject(_losingProject);
+
+        assertEq(abi.encode(_project.projectStatus), abi.encode(ProjectRegistry.ProjectStatus.Rejected));
+    }
 }
