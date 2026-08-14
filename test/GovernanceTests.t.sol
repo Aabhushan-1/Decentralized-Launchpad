@@ -10,6 +10,8 @@ contract GovernanceTests is Test {
     Governance governance;
     ProjectRegistry projectRegistry;
 
+    uint256 private constant _QUORUM = 100;
+
     uint256 _duration = 30 days;
     string _projectName = "SolarGrid AI";
     string _projectCategory = "Renewable Energy";
@@ -48,6 +50,16 @@ contract GovernanceTests is Test {
     function _createSession(uint256 duration, uint256 _projectCount) internal returns (uint256, uint256[] memory) {
         uint256[] memory _projectIds = _createProjects(_projectCount);
         return (governance.createSession(duration, _projectIds), _projectIds);
+    }
+
+    function _castVote(uint256 _totalVotes, uint256 _sessionId, uint256 _projectId) internal {
+        address tempAddress;
+        for (uint256 i = 0; i < _totalVotes; i++) {
+            // forge-lint: disable-next-line(unsafe-typecast)
+            tempAddress = address(uint160(i + 1));
+            vm.prank(tempAddress);
+            governance.vote(_sessionId, _projectId);
+        }
     }
 
     function test_createSession_Returns_Correct_Session_Id() public {
@@ -94,5 +106,18 @@ contract GovernanceTests is Test {
 
         vm.expectRevert("Session does not exist!");
         governance.vote((_sessionId + 1), _projectIds[0]);
+    }
+
+    function test_vote_Reverts_If_Session_Is_Closed() public {
+        uint256 _projectCount = 1;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds[0];
+        _castVote(_QUORUM, _sessionId, _projectId);
+        vm.warp(_duration + block.timestamp);
+        governance.finalizeVoting(_sessionId);
+
+        vm.expectRevert("Session Closed!");
+        governance.vote(_sessionId, _projectId);
     }
 }
