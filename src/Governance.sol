@@ -141,4 +141,8 @@ contract Governance {
     function getSession(uint256 _sessionId) public view sessionExists(_sessionId) returns (VotingSession memory) {
         return sessions[_sessionId];
     }
+
+    function getAddressHasVoted(address _voter, uint256 _sessionId) public view returns (bool _voted) {
+        return addressHasVoted[_voter][_sessionId];
+    }
 }

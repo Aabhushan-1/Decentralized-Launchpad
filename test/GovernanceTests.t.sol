@@ -11,6 +11,7 @@ contract GovernanceTests is Test {
     ProjectRegistry projectRegistry;
 
     uint256 private constant _QUORUM = 100;
+    address voter = address(1);
 
     uint256 _duration = 30 days;
     string _projectName = "SolarGrid AI";
@@ -119,5 +120,69 @@ contract GovernanceTests is Test {
 
         vm.expectRevert("Session Closed!");
         governance.vote(_sessionId, _projectId);
+    }
+
+    function test_vote_Reverts_If_Session_Period_Ended() public {
+        uint256 _projectCount = 1;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds[0];
+        vm.warp(_duration + block.timestamp + 1 days);
+
+        vm.expectRevert("Voting period ended!");
+        governance.vote(_sessionId, _projectId);
+    }
+
+    function test_vote_Reverts_If_User_Already_Voted() public {
+        uint256 _projectCount = 1;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds[0];
+
+        vm.prank(voter);
+        governance.vote(_sessionId, _projectId);
+        vm.expectRevert("Already voted in this session!");
+        vm.prank(voter);
+        governance.vote(_sessionId, _projectId);
+    }
+
+    function test_vote_Reverts_If_Project_Doesnt_Exits() public {
+        uint256 _projectCount = 1;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds.length;
+
+        vm.expectRevert("Project Not Found!");
+        vm.prank(voter);
+        governance.vote(_sessionId, _projectId);
+    }
+
+    function test_vote_Emits() public {
+        uint256 _projectCount = 1;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds[0];
+
+        vm.expectEmit();
+        emit Voted(_sessionId, _projectId, voter);
+        vm.prank(voter);
+        governance.vote(_sessionId, _projectId);
+    }
+
+    function test_vote_Updates_Mapping() public {
+        uint256 _projectCount = 1;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds[0];
+
+        bool initialMapping = governance.getAddressHasVoted(voter, _sessionId);
+
+        vm.prank(voter);
+        governance.vote(_sessionId, _projectId);
+
+        bool finalMapping = governance.getAddressHasVoted(voter, _sessionId);
+
+        assertEq(initialMapping, false);
+        assertEq(finalMapping, true);
     }
 }
