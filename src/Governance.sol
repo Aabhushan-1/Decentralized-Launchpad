@@ -97,7 +97,7 @@ contract Governance {
         }
     }
 
-    function finalizeVoting(uint256 _sessionId) public sessionExists(_sessionId) {
+    function finalizeVoting(uint256 _sessionId) public sessionExists(_sessionId) returns (uint256 winningProjectId) {
         VotingSession storage _session = sessions[_sessionId];
         uint256 proposalLength = _session.proposals.length;
 
@@ -136,6 +136,8 @@ contract Governance {
         _session.closed = true;
 
         emit SessionClosed(_sessionId, _winningProjectId);
+
+        return _winningProjectId;
     }
 
     function getSession(uint256 _sessionId) public view sessionExists(_sessionId) returns (VotingSession memory) {

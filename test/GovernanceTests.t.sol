@@ -258,7 +258,7 @@ contract GovernanceTests is Test {
         assertEq(abi.encode(_project.projectStatus), abi.encode(ProjectRegistry.ProjectStatus.Approved));
     }
 
-    function test_finalizeVoting_Rejects_Winning_Project() public {
+    function test_finalizeVoting_Rejects_Losing_Project() public {
         uint256 _projectCount = 2;
 
         (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
@@ -272,5 +272,18 @@ contract GovernanceTests is Test {
         ProjectRegistry.Project memory _project = projectRegistry.getProject(_losingProject);
 
         assertEq(abi.encode(_project.projectStatus), abi.encode(ProjectRegistry.ProjectStatus.Rejected));
+    }
+
+    function test_finalizeVoting_Returns_Winning_ProjectId() public {
+        uint256 _projectCount = 2;
+
+        (uint256 _sessionId, uint256[] memory _projectIds) = _createSession(_duration, _projectCount);
+        uint256 _projectId = _projectIds[0];
+
+        _castVote(_QUORUM, _sessionId, _projectId);
+        vm.warp(_duration + block.timestamp);
+        uint256 _winningProjectId = governance.finalizeVoting(_sessionId);
+
+        assertEq(_winningProjectId, _projectId);
     }
 }
