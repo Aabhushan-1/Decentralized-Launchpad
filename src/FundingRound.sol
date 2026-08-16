@@ -14,14 +14,14 @@ contract FundingRound {
     uint256 private totalFundRaised;
 
     mapping(address => uint256) private amountContributed;
-    
+
     enum FundingStatus {
         Active,
         Successful,
         Withdrawn,
         Failed
     }
-    
+
     event Funded(address funder, uint256 _winningProjectId, uint256 _amount);
     event Withdrawn(address owner, uint256 _winningProjectId, uint256 _amount);
     event Refunded(address contributor, uint256 _winningProjectId, uint256 _amount);
@@ -46,14 +46,14 @@ contract FundingRound {
             revert("FundingRound Not Active!");
         }
 
-        if (block.timestamp >= deadline){
+        if (block.timestamp >= deadline) {
             revert("Deadline Reached!");
         }
 
         address _funder = msg.sender;
         uint256 _amount = msg.value;
 
-        if (totalFundRaised + _amount  > fundingGoal) {
+        if (totalFundRaised + _amount > fundingGoal) {
             revert("Exceeds Funding Goal!");
         }
 
@@ -63,7 +63,7 @@ contract FundingRound {
         if (totalFundRaised == fundingGoal) {
             fundingStatus = FundingStatus.Successful;
         }
-        
+
         emit Funded(_funder, winningProjectId, _amount);
     }
 
@@ -80,7 +80,7 @@ contract FundingRound {
         totalFundRaised = 0;
         fundingStatus = FundingStatus.Withdrawn;
 
-        (bool success, ) = projectOwner.call{value: _amount}("");
+        (bool success,) = projectOwner.call{value: _amount}("");
         require(success, "Transaction Failed!");
 
         emit Withdrawn(projectOwner, winningProjectId, _amount);
@@ -98,14 +98,14 @@ contract FundingRound {
         uint256 _amount = amountContributed[msg.sender];
         amountContributed[msg.sender] = 0;
 
-        (bool success, ) = msg.sender.call{value: _amount}("");
+        (bool success,) = msg.sender.call{value: _amount}("");
         require(success, "Transaction Failed!");
 
         emit Refunded(msg.sender, winningProjectId, _amount);
     }
 
     function finalizeRound() public {
-        if (block.timestamp  < deadline) {
+        if (block.timestamp < deadline) {
             revert("Deadline not reached!");
         }
 
