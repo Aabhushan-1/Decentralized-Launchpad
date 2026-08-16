@@ -24,6 +24,8 @@ contract FundingRound {
     
     event Funded(address funder, uint256 _winningProjectId, uint256 _amount);
     event Withdrawn(address owner, uint256 _winningProjectId, uint256 _amount);
+    event Refunded(address contributor, uint256 _winningProjectId, uint256 _amount);
+    event RoundFinalized(uint256 _winningProjectId, FundingStatus status);
 
     constructor(uint256 _winningProjectId, uint256 _duration, address _projectRegistry) {
         projectRegistry = ProjectRegistry(_projectRegistry);
@@ -84,5 +86,35 @@ contract FundingRound {
         emit Withdrawn(projectOwner, winningProjectId, _amount);
     }
 
-    function refund() public {}
+    function refund() public {
+        if (fundingStatus != FundingStatus.Failed) {
+            revert("Funding Not Failed!");
+        }
+
+        if (amountContributed[msg.sender] == 0) {
+            revert("No Contribution For Refund!");
+        }
+
+        uint256 _amount = amountContributed[msg.sender];
+        amountContributed[msg.sender] = 0;
+
+        (bool success, ) = msg.sender.call{value: _amount}("");
+        require(success, "Transaction Failed!");
+
+        emit Refunded(msg.sender, winningProjectId, _amount);
+    }
+
+    function finalizeRound() public {
+        if (block.timestamp  < deadline) {
+            revert("Deadline not reached!");
+        }
+
+        if (fundingStatus != FundingStatus.Active) {
+            revert("Already Finalized!");
+        }
+
+        fundingStatus = FundingStatus.Failed;
+
+        emit RoundFinalized(winningProjectId, fundingStatus);
+    }
 }
