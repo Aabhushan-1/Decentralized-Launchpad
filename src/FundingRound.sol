@@ -117,4 +117,16 @@ contract FundingRound {
 
         emit RoundFinalized(winningProjectId, fundingStatus);
     }
+
+    function getAmountContributed(address _funder) public view returns (uint256 _amount) {
+        return amountContributed[_funder];
+    }
+
+    function getTotalFundRaised() public view returns (uint256 _totalFundRaised) {
+        return totalFundRaised;
+    }
+
+    function getFundingStatus() public view returns (FundingStatus _fundingStatus) {
+        return fundingStatus;
+    }
 }
