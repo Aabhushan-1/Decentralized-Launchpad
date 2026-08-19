@@ -53,8 +53,7 @@ contract AutoFundingRoundDeployerTests is Test {
         vm.warp(block.timestamp + _duration + 1);
         _winningProjectId = governance.finalizeVoting(_sessionId);
 
-        autoFundingRoundDeployer =
-            AutoFundingRoundDeployer(governance.getAutoFundingRoundDeployer());
+        autoFundingRoundDeployer = AutoFundingRoundDeployer(governance.getAutoFundingRoundDeployer());
     }
 
     function test_deployNewFundingRound_Reverts_If_Caller_Is_Not_Governance() public {
@@ -68,20 +67,20 @@ contract AutoFundingRoundDeployerTests is Test {
         autoFundingRoundDeployer.deployNewFundingRound(_winningProjectId);
     }
 
-    function test_deployNewFundingRound_Updates_projectIdToFundingRound_Mapping() view public {
+    function test_deployNewFundingRound_Updates_projectIdToFundingRound_Mapping() public view {
         address _mapping = autoFundingRoundDeployer.getFundingRound(_winningProjectId);
 
         assert(_mapping != address(0));
     }
 
-    function test_deployNewFundingRound_Updates_fundingRoundAddresses_Array() view  public {
+    function test_deployNewFundingRound_Updates_fundingRoundAddresses_Array() public view {
         assertEq(autoFundingRoundDeployer.getAllFundingRounds().length, 1);
     }
 
     function test_deployNewFundingRound_Emits() public {
         uint256 nonce = vm.getNonce(address(autoFundingRoundDeployer));
         address expectedAddressOfNewFundingRound = vm.computeCreateAddress(address(autoFundingRoundDeployer), nonce);
-        
+
         uint256[] memory newProjectIds = new uint256[](1);
         newProjectIds[0] = projectRegistry.submitProject(
             _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
@@ -89,6 +88,7 @@ contract AutoFundingRoundDeployerTests is Test {
 
         uint256 newSessionId = governance.createSession(_duration, newProjectIds);
         for (uint256 i = 0; i < _QUORUM; i++) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             vm.prank(address(uint160(i + 200)));
             governance.vote(newSessionId, newProjectIds[0]);
         }

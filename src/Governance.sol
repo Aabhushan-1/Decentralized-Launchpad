@@ -26,7 +26,8 @@ contract Governance {
     constructor(address _projectRegistry, uint256 _fundingRoundDuration) {
         fundingRoundDuration = _fundingRoundDuration;
         projectRegistry = ProjectRegistry(_projectRegistry);
-        autoFundingRoundDeployer = new AutoFundingRoundDeployer(address(this), fundingRoundDuration, address(projectRegistry));
+        autoFundingRoundDeployer =
+            new AutoFundingRoundDeployer(address(this), fundingRoundDuration, address(projectRegistry));
     }
 
     modifier sessionOpen(uint256 _sessionId) {
