@@ -21,13 +21,15 @@ contract GovernanceTests is Test {
     string _projectObjectives = "Deploy 50 solar nodes, complete IoT integration, launch beta.";
     ProjectRegistry.ProjectReturnType _projectReturnType = ProjectRegistry.ProjectReturnType.Payback;
 
+    uint256 private _fundingRoundDuration = 30 days;
+
     event SessionCreated(uint256 indexed sessionId);
     event Voted(uint256 indexed sessionId, uint256 indexed projectId, address voter);
     event SessionClosed(uint256 indexed sessionId, uint256 winningProjectId);
 
     function setUp() public {
         projectRegistry = new ProjectRegistry(address(this));
-        governance = new Governance(address(projectRegistry));
+        governance = new Governance(address(projectRegistry), _fundingRoundDuration);
 
         projectRegistry.transferOwnership(address(governance));
     }

@@ -27,11 +27,13 @@ contract AutoFundingRoundDeployerTests is Test {
     uint256[] projectIds;
     uint256 _winningProjectId;
 
+    uint256 private _fundingRoundDuration = 30 days;
+
     event NewFundingRoundDeployed(uint256 indexed winningProjectId, address fundingRound);
 
     function setUp() public {
         projectRegistry = new ProjectRegistry(address(this));
-        governance = new Governance(address(projectRegistry));
+        governance = new Governance(address(projectRegistry), _fundingRoundDuration);
         projectRegistry.transferOwnership(address(governance));
 
         vm.prank(projectOwner);
@@ -52,7 +54,7 @@ contract AutoFundingRoundDeployerTests is Test {
         _winningProjectId = governance.finalizeVoting(_sessionId);
 
         autoFundingRoundDeployer =
-            new AutoFundingRoundDeployer(address(governance), _duration, address(projectRegistry));
+            AutoFundingRoundDeployer(governance.getAutoFundingRoundDeployer());
     }
 
     function test_deployNewFundingRound_Reverts_If_Caller_Is_Not_Governance() public {
@@ -62,42 +64,39 @@ contract AutoFundingRoundDeployerTests is Test {
 
     function test_deployNewFundingRound_Reverts_If_Funding_Round_Already_Deployed() public {
         vm.prank(address(governance));
-        autoFundingRoundDeployer.deployNewFundingRound(_winningProjectId);
-
-        vm.prank(address(governance));
         vm.expectRevert("Funding round already deployed!");
         autoFundingRoundDeployer.deployNewFundingRound(_winningProjectId);
     }
 
-    function test_deployNewFundingRound_Updates_projectIdToFundingRound_Mapping() public {
-        address initialMapping = autoFundingRoundDeployer.getFundingRound(_winningProjectId);
+    function test_deployNewFundingRound_Updates_projectIdToFundingRound_Mapping() view public {
+        address _mapping = autoFundingRoundDeployer.getFundingRound(_winningProjectId);
 
-        vm.prank(address(governance));
-        autoFundingRoundDeployer.deployNewFundingRound(_winningProjectId);
-
-        address finalMapping = autoFundingRoundDeployer.getFundingRound(_winningProjectId);
-
-        assertEq(initialMapping, address(0));
-        assert(finalMapping != address(0));
+        assert(_mapping != address(0));
     }
 
-    function test_deployNewFundingRound_Updates_fundingRoundAddresses_Array() public {
-        uint256 initialArrayLenght = autoFundingRoundDeployer.getAllFundingRounds().length;
-
-        vm.prank(address(governance));
-        autoFundingRoundDeployer.deployNewFundingRound(_winningProjectId);
-
-        uint256 finalArrayLenght = autoFundingRoundDeployer.getAllFundingRounds().length;
-
-        assertEq(finalArrayLenght, initialArrayLenght + 1);
+    function test_deployNewFundingRound_Updates_fundingRoundAddresses_Array() view  public {
+        assertEq(autoFundingRoundDeployer.getAllFundingRounds().length, 1);
     }
 
     function test_deployNewFundingRound_Emits() public {
         uint256 nonce = vm.getNonce(address(autoFundingRoundDeployer));
         address expectedAddressOfNewFundingRound = vm.computeCreateAddress(address(autoFundingRoundDeployer), nonce);
-        vm.prank(address(governance));
+        
+        uint256[] memory newProjectIds = new uint256[](1);
+        newProjectIds[0] = projectRegistry.submitProject(
+            _projectName, _projectCategory, _projectDescription, _fundingGoal, _projectObjectives, _projectReturnType
+        );
+
+        uint256 newSessionId = governance.createSession(_duration, newProjectIds);
+        for (uint256 i = 0; i < _QUORUM; i++) {
+            vm.prank(address(uint160(i + 200)));
+            governance.vote(newSessionId, newProjectIds[0]);
+        }
+
+        vm.warp(block.timestamp + _duration + 1);
+
         vm.expectEmit();
-        emit NewFundingRoundDeployed(_winningProjectId, expectedAddressOfNewFundingRound);
-        autoFundingRoundDeployer.deployNewFundingRound(_winningProjectId);
+        emit NewFundingRoundDeployed(newProjectIds[0], expectedAddressOfNewFundingRound);
+        governance.finalizeVoting(newSessionId);
     }
 }

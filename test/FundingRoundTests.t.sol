@@ -28,6 +28,8 @@ contract FundingRoundTests is Test {
     uint256[] projectIds;
     uint256 _winningProjectId;
 
+    uint256 private _fundingRoundDuration = 30 days;
+
     event Funded(address funder, uint256 _winningProjectId, uint256 _amount);
     event Withdrawn(address owner, uint256 _winningProjectId, uint256 _amount);
     event Refunded(address contributor, uint256 _winningProjectId, uint256 _amount);
@@ -35,7 +37,7 @@ contract FundingRoundTests is Test {
 
     function setUp() public {
         projectRegistry = new ProjectRegistry(address(this));
-        governance = new Governance(address(projectRegistry));
+        governance = new Governance(address(projectRegistry), _fundingRoundDuration);
         projectRegistry.transferOwnership(address(governance));
 
         vm.prank(projectOwner);

@@ -3,6 +3,7 @@
 pragma solidity ^0.8.19;
 
 import {ProjectRegistry} from "../src/ProjectRegistry.sol";
+import {AutoFundingRoundDeployer} from "../src/AutoFundingRoundDeployer.sol";
 
 contract Governance {
     struct Proposal {
@@ -19,9 +20,13 @@ contract Governance {
     }
 
     ProjectRegistry private projectRegistry;
+    AutoFundingRoundDeployer private autoFundingRoundDeployer;
+    uint256 private fundingRoundDuration;
 
-    constructor(address _projectRegistry) {
+    constructor(address _projectRegistry, uint256 _fundingRoundDuration) {
+        fundingRoundDuration = _fundingRoundDuration;
         projectRegistry = ProjectRegistry(_projectRegistry);
+        autoFundingRoundDeployer = new AutoFundingRoundDeployer(address(this), fundingRoundDuration, address(projectRegistry));
     }
 
     modifier sessionOpen(uint256 _sessionId) {
@@ -137,6 +142,8 @@ contract Governance {
 
         emit SessionClosed(_sessionId, _winningProjectId);
 
+        autoFundingRoundDeployer.deployNewFundingRound(_winningProjectId);
+
         return _winningProjectId;
     }
 
@@ -146,5 +153,9 @@ contract Governance {
 
     function getAddressHasVoted(address _voter, uint256 _sessionId) public view returns (bool _voted) {
         return addressHasVoted[_voter][_sessionId];
+    }
+
+    function getAutoFundingRoundDeployer() public view returns (address) {
+        return address(autoFundingRoundDeployer);
     }
 }
